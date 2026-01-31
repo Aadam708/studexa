@@ -1,9 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
-import { Sparkles, Trophy, TrendingUp } from "lucide-react";
+import FlashcardComponent from "@/components/FlashcardComponent";
+import { Sparkles} from "lucide-react";
+
 
 export default function Home() {
+
   return (
     <main className="bg-[#F5F5F7] w-full min-h-screen">
       <Navbar />
@@ -50,48 +53,8 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="flex flex-col justify-center items-center ">
+      <FlashcardComponent/>
 
-        <div className= "grid grid-cols-2 bg-white p-10 rounded-2xl mt-20 mb-20">
-
-          <div className="flex flex-col justify-start gap-5 bg-linear-to-br from-indigo-600 to-violet-600 rounded-2xl text-white pl-6 pr-13 py-15">
-
-              <p className="text-white/80">Sample flashcard</p>
-              <h3 className="text-2xl font-bold">What is the Pythagorean theorem?</h3>
-              <p className="text-white/80">Click to reveal answer...</p>
-
-          </div>
-
-          <div className="flex flex-col justify-center items-center gap-7">
-
-            <div className="flex flex-col rounded-2xl bg-[#F5F5F7] pl-7 pr-60 py-10">
-              <div className="flex items-center gap-3 text-gray-700">
-                <TrendingUp className="w-6 h-6"  />
-                <span>Today's progress</span>
-              </div>
-              <h3 className="font-bold text-3xl mt-2">88%</h3>
-            </div>
-
-            <div className="flex flex-col rounded-2xl bg-[#F5F5F7] pl-7 pr-60 py-10">
-              <div className="flex items-center gap-3 text-gray-700">
-                <Trophy className="w-6 h-6 text-yellow-500"  />
-                <span>Cards mastered</span>
-              </div>
-              <h3 className="font-bold text-3xl mt-2">150</h3>
-            </div>
-
-
-          </div>
-
-
-
-
-
-
-
-        </div>
-
-      </section>
     </main>
   );
 }

@@ -32,7 +32,10 @@ const FlashcardComponent = () => {
           >
             {/* front face */}
             <div
-              className="absolute inset-0 flex flex-col justify-start gap-5 bg-linear-to-br from-indigo-600 to-violet-600 rounded-2xl text-white pl-6 pr-13 py-15"
+              className="absolute inset-0 flex flex-col justify-start gap-5
+                shadow-none shadow-teal-200 hover:shadow-2xl hover:-translate-y-1
+                bg-linear-to-br from-indigo-600 to-violet-600 rounded-2xl text-white pl-6 pr-13 py-15
+                transition-all transition-duration-300"
               style={{ backfaceVisibility: "hidden" }}
             >
               <p className="text-white/80">Sample flashcard</p>
@@ -44,7 +47,7 @@ const FlashcardComponent = () => {
 
             {/* back face */}
             <div
-              className="absolute inset-0 flex flex-col justify-start gap-5 bg-linear-to-br from-indigo-600 to-violet-600 rounded-2xl text-white pl-6 pr-13 py-15"
+              className="absolute inset-0 flex flex-col justify-start gap-5 shadow-none shadow-teal-200 hover:shadow-2xl hover:-translate-y-1 bg-linear-to-br from-indigo-600 to-violet-600 rounded-2xl text-white pl-6 pr-13 py-15 transition-all transition-duration-300"
               style={{
                 transform: "rotateY(180deg)",
                 backfaceVisibility: "hidden",

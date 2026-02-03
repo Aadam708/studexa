@@ -46,7 +46,7 @@ export default function Home() {
           </Link>
 
           <Link href="/learn-more">
-            <button className="px-8 py-3.5 rounded-lg bg-white text-gray-900 font-semibold border-2 border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all duration-200">
+            <button className="px-8 py-3.5 rounded-lg bg-white text-gray-900 font-semibold border-2 border-gray-200 hover:border-gray-300 hover:bg-gray-50 hover:cursor-pointer transition-all duration-200">
               Learn More
             </button>
           </Link>

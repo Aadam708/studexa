@@ -25,7 +25,7 @@ const Navbar = () => {
           className="p-2 px-3 rounded-2xl text-center font-medium font-sans text-gray-600 hover:text-indigo-600
           transiton-colors duration-350 hover:bg-gray-100"
         >
-          <Link href="#">Login</Link>
+          <Link href="login">Login</Link>
         </button>
 
         <button
@@ -34,7 +34,7 @@ const Navbar = () => {
             hover:from-blue-600 hover:to-purple-600 shadow-lg shadow-teal-200 hover:shadow-teal-300
             transition-all duration-300 hover:-translate-y-0.5"
         >
-          <Link href="#" className="text-white">
+          <Link href="register" className="text-white">
             Register
           </Link>
         </button>

@@ -18,7 +18,7 @@ const Navbar = () => {
           className="p-2 pr-3 pl-3 rounded-2xl text-center font-medium font-sans text-gray-600 hover:text-indigo-600
           transition-colors duration-350 hover:bg-gray-100"
         >
-          <Link href="#">About Us</Link>
+          <Link href="/">Home</Link>
         </button>
 
         <button

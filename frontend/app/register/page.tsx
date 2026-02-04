@@ -1,3 +1,4 @@
+import Navbar from '@/components/Navbar'
 import Link from 'next/link'
 import React from 'react'
 
@@ -32,12 +33,14 @@ const page = () => {
 
 
   return (
-    <div className='bg-linear-to-b from-indigo-400 to-cyan-500 w-full min-h-screen flex flex-col items-center justify-center py-10'>
+    <main>
+      <Navbar></Navbar>
+      <div className='bg-linear-to-b from-indigo-400 to-cyan-500 w-full min-h-screen flex flex-col items-center  py-10'>
 
 
       {/* Register form*/}
 
-      <div className=' rounded-2xl bg-white px-2 py-10 min-w-[600px]'>
+      <div className=' bg-white  py-10 min-w-[600px] shadow-2xl shadow-red-300 '>
         <div className='flex flex-col justify-center items-center gap-3'>
 
           <h1 className='text-2xl font'>Sign Up</h1>
@@ -56,7 +59,7 @@ const page = () => {
 
           <Input
               contentType='email'
-              label='email'
+              label='Email'
             >
           </Input>
 
@@ -82,6 +85,8 @@ const page = () => {
 
 
     </div>
+    </main>
+
   )
 }
 

@@ -1,16 +1,25 @@
+"use client"
 import Navbar from '@/components/Navbar'
 import Link from 'next/link'
-import React from 'react'
+import React, {useState} from 'react'
+import { useRouter } from 'next/navigation'
+
 
 
 interface InputProps {
-  contentType:string,
-  label:string
+  contentType: string
+  label: string
+  name: string
+  value: string
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void
 }
 
 const Input : React.FC<InputProps> = ({
   contentType,
-  label
+  label,
+  name,
+  value,
+  onChange
 }) =>(
 
   <div className='mt-8 w-80'>
@@ -19,6 +28,9 @@ const Input : React.FC<InputProps> = ({
     </div>
 
     <input
+      name={name}
+      value={value}
+      onChange={onChange}
       type={contentType}
       placeholder={label}
       className='w-full border-b border-gray-300 focus:outline-none focus:border-b-indigo-600 transition duration-300 py-2'
@@ -27,44 +39,86 @@ const Input : React.FC<InputProps> = ({
 )
 
 
+
 const page = () => {
+
+  const router = useRouter()
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading,setLoading] = useState(false);
+  const [error,setError] = useState<string | null>(null)
+
+
+  async function handleSubmit(e: React.FormEvent) {
+
+    e.preventDefault()
+    setError(null);
+    setLoading(true);
+
+    //making sure all fields are filled out
+    if(email === ""){
+      setError("please fill out all fields before submitting")
+      setLoading(false)
+      return;
+    }
+    if(password === ""){
+      setError("please fill out all fields before submitting")
+      setLoading(false)
+      return;
+    }
+
+    try{
+
+      const res = await fetch("http://localhost:8080/api/auth/login", {
+
+        method:"POST",
+        headers:{"Content-Type" : "application/json"},
+        body:JSON.stringify({email, password}),
+        credentials: "include" // send/accept HttpOnly cookies
+      });
+
+      if (!res.ok){
+        const err = await res.json().catch(()=>null)
+        throw new Error(err?.message || 'Login failed')
+      }
+
+      router.push('/dashboard')
+    } catch (err: any) {
+      setError(err.message || 'Unexpected error')
+    } finally {
+      setLoading(false)
+    }
+
+
+  }
+
+
   return (
-    <main>
-      <Navbar></Navbar>
-      <div className='bg-linear-to-b from-indigo-400 to-cyan-500 w-full min-h-screen flex flex-col items-center  py-10'>
+     <main>
+      <Navbar />
+      <div className='bg-linear-to-b from-indigo-400 to-cyan-500 w-full min-h-screen flex flex-col items-center py-10'>
+        <div className='bg-white py-10 min-w-[600px] shadow-2xl shadow-red-300'>
+          <form onSubmit={handleSubmit} className='flex flex-col justify-center items-center gap-3'>
+            <h1 className='text-2xl font'>Login</h1>
 
+            <Input contentType='email' label='Email' name='email' value={email} onChange={(e) => setEmail(e.target.value)} />
 
-      {/* Login form*/}
+            <Input contentType='password' label='Password' name='password' value={password} onChange={(e) => setPassword(e.target.value)} />
 
-      <div className=' bg-white  py-10 min-w-[600px] shadow-2xl shadow-red-300 '>
-        <div className='flex flex-col justify-center items-center gap-3'>
+            {error && <p className='text-red-500 mt-2'>{error}</p>}
 
-          <h1 className='text-2xl font'>Login</h1>
-
-          <Input
-              contentType='email'
-              label='Email'
-            >
-          </Input>
-
-          <Input
-              contentType='password'
-              label='Password'
-            >
-          </Input>
-
-
-          <br />
-          <button className='rounded-2xl text-white  bg-linear-to-r from-indigo-600 to-violet-800 shadow hover:from-indigo-700 hover:to-violet-700 hover:shadow-2xl hover:shadow-teal-300 px-7 py-2 mt-5'>
-            <Link href="#">Login</Link>
-          </button>
-
-
+            <button
+              className='hover:cursor-pointer rounded-2xl text-white  bg-linear-to-r from-indigo-600 to-violet-800 shadow
+                           hover:from-indigo-700 hover:to-violet-700 hover:shadow-2xl
+                           hover:shadow-teal-300 px-7 py-2 mt-5'
+              type='submit'
+              disabled={loading}
+              >
+              {loading ? 'Logging in...' : 'Login'}
+            </button>
+          </form>
         </div>
       </div>
-
-
-    </div>
     </main>
 
   )

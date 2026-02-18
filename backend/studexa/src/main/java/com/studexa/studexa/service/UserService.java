@@ -3,6 +3,7 @@ package com.studexa.studexa.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import com.studexa.studexa.dto.UserDto;
 import com.studexa.studexa.entity.User;
@@ -23,18 +24,28 @@ public class UserService {
 
     public UserDto register(User user){
 
-        //hashing the password
+        user.setEmail(user.getEmail().toLowerCase().trim());
 
-        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-        String passwordHash = encoder.encode(user.getPassword());
+         //checking ig the user already exists
+        if (userRepository.existsByEmail(user.getEmail())) {
+            throw new IllegalArgumentException("Email already exists please use a different email");
+        }
 
-        //storing the password hash in user entity
+         //hashing the password
 
-        user.setPasswordHash(passwordHash);
+         BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+         String passwordHash = encoder.encode(user.getPassword());
 
-        User savedUser = userRepository.save(user);
+         //storing the password hash in user entity
 
-        return userMapper.toDto(savedUser);
-    }
+         user.setPasswordHash(passwordHash);
+
+         try {
+             User savedUser = userRepository.save(user);
+             return userMapper.toDto(savedUser);
+         } catch (DataIntegrityViolationException e) {
+             throw new IllegalArgumentException("Email already exists");
+         }
+     }
 
 }

@@ -96,5 +96,23 @@ public class AuthController {
 
     }
 
+    //clearing all cookies for when user wants to logout
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(){
+       ResponseCookie cookie = ResponseCookie.from("token", "")
+                .httpOnly(true)
+                .secure(false)
+                .path("/")
+                .maxAge(0)
+                .sameSite("None")
+                .build();
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                .body(Map.of("message", "logged out successfully"));
+    }
+
+
+
 
 }

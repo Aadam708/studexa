@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.security.core.context.SecurityContextHolder; // Add this import
 
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.services.drive.Drive;
@@ -21,7 +22,8 @@ import com.studexa.studexa.service.GoogleDriveService;
 import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
-@CrossOrigin(origins = "http://localhost:3000") //cors to my next frontend
+// allowCredentials = "true" so the browser sends the JWT cookie
+@CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
 @RequestMapping("/api/drive")
 public class DriveController {
     private final GoogleDriveService driveService;
@@ -30,10 +32,20 @@ public class DriveController {
         this.driveService = driveService;
     }
 
+    //  getting the email from the JWT filter
+    private String getUserId() {
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated() && !auth.getPrincipal().equals("anonymousUser")) {
+            return auth.getName(); // Returns the logged-in email
+        }
+        throw new RuntimeException("User is not logged in!");
+    }
+
     //getting the current user details from their session and setting up the google drive authentication process
     @GetMapping("/auth-url")
-    public ResponseEntity<?> getAuthUrl(HttpServletRequest req) {
-        String userId = req.getSession(true).getId();
+    public ResponseEntity<?> getAuthUrl() {
+        // changed code: Use JWT email instead of session
+        String userId = getUserId();
         String url = driveService.getAuthorizationUrl(userId);
         Map<String, String> response = new HashMap<>();
         response.put("authUrl", url);
@@ -47,23 +59,20 @@ public class DriveController {
     public ResponseEntity<?> oauth2callback(
             @RequestParam(required = false) String code,
             @RequestParam(required = false) String error,
-            @RequestParam(required = false) String state,
-            HttpServletRequest req) throws IOException {
+            @RequestParam(required = false) String state) throws IOException {
         if (error != null) {
-            //if there is an error then we can just redirect to the revise page but give an error response
-            //so the frontend can display that there was an error to connect
             String errUrl = "http://localhost:3000/revise?drive_error=" + java.net.URLEncoder.encode(error, "UTF-8");
             return ResponseEntity.status(302).header("Location", errUrl).build();
         }
         if (code == null) {
-            //if no status code is returned by google drive there was also a problem to connect
             String errUrl = "http://localhost:3000/revise?drive_error=missing_code";
             return ResponseEntity.status(302).header("Location", errUrl).build();
         }
-        String userId = req.getSession(true).getId();
+
+        //  the email is the id in this case as i stored that only in the jwt
+        String userId = getUserId();
         Credential cred = driveService.handleCallback(code, userId);
 
-        //if the credentials are unable to be made by drive service then we get an auth failure res
         if (cred == null) {
             String errUrl = "http://localhost:3000/revise?drive_error=auth_failed";
             return ResponseEntity.status(302).header("Location", errUrl).build();
@@ -78,11 +87,11 @@ public class DriveController {
 
     //  the endpoint is used after connecting to drive to actually show the files
     @GetMapping("/files")
-    public ResponseEntity<?> listFiles(HttpServletRequest req) throws IOException {
-        String userId = req.getSession(true).getId();
+    public ResponseEntity<?> listFiles() throws IOException {
+        //loading the users email again to show their files
+        String userId = getUserId();
         Credential cred = driveService.loadCredential(userId);
 
-        //error handling re-using code from the connection to double check the user is connected to drive
         if (cred == null) {
             return ResponseEntity.status(401).body(Map.of("error", "Not authenticated"));
         }
@@ -108,18 +117,27 @@ public class DriveController {
     // this is so the frontend can call this endpoint before any others to actually check the user is
     //connected to their drive without moving on to other endpoints
     @GetMapping("/authenticated")
-    public ResponseEntity<?> isAuthenticated(HttpServletRequest req) throws IOException {
-        String userId = req.getSession(true).getId();
-        Credential cred = driveService.loadCredential(userId);
-        Map<String, Boolean> response = new HashMap<>();
-        response.put("authenticated", cred != null);
-        return ResponseEntity.ok(response);
+    public ResponseEntity<?> isAuthenticated() {
+        try {
+            //try to find credentials for the logged-in email
+            String userId = getUserId();
+            Credential cred = driveService.loadCredential(userId);
+            Map<String, Boolean> response = new HashMap<>();
+            response.put("authenticated", cred != null);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            // If user isn't logged in with JWT return false
+            Map<String, Boolean> response = new HashMap<>();
+            response.put("authenticated", false);
+            return ResponseEntity.ok(response);
+        }
     }
 
     // Gettinh the access token from the google drive account that hasbeen connected
     @GetMapping("/access-token")
-    public ResponseEntity<?> getAccessToken(HttpServletRequest req) throws IOException {
-        String userId = req.getSession(true).getId();
+    public ResponseEntity<?> getAccessToken() throws IOException {
+        //  Usinh JWT email
+        String userId = getUserId();
         Credential cred = driveService.loadCredential(userId);
         if (cred == null) {
             return ResponseEntity.status(401).body(Map.of("error", "Not authenticated"));

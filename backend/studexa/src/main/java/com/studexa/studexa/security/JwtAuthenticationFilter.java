@@ -4,6 +4,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.Cookie;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -33,26 +34,45 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     @NonNull HttpServletResponse response,
                                     @NonNull FilterChain filterChain) throws ServletException, IOException {
 
-        //finding the header containing Authorization as this is a req from the user on the frontend
-        String header = request.getHeader("Authorization");
         String token = null;
         String username = null;
 
-        //making sure the header starts with bearer to confirm its jwt
-        if (header != null && header.startsWith("Bearer ")) {
-            token = header.substring(7);
-            if (jwtUtil.validateToken(token)) {
-                username = jwtUtil.getUsernameFromToken(token);
+        //trying to getting token from Authorization Header
+        // String authHeader = request.getHeader("Authorization");
+        // if (authHeader != null && authHeader.startsWith("Bearer ")) {
+        //     token = authHeader.substring(7);
+        // }
+
+        // since i stored jwt in a HTTP only cookie it will be in the cookie not in a local storage
+        if (token == null && request.getCookies() != null) {
+            for (Cookie cookie : request.getCookies()) {
+                if ("token".equals(cookie.getName())) {
+                    token = cookie.getValue();
+                    break;
+                }
             }
         }
 
-        //now spring security can confirm its an authenticated user and set it to the jwt auth token
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-            UsernamePasswordAuthenticationToken authToken =
-                    new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-            authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-            SecurityContextHolder.getContext().setAuthentication(authToken);
+        //Validating token and setring Context
+        if (token != null) {
+            try {
+                username = jwtUtil.getUsernameFromToken(token); //getting the email
+                if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                    UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+
+                    if (jwtUtil.validateToken(token)) {
+                        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                                userDetails, null, userDetails.getAuthorities());
+                        authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+                        // setting the context holder filter to pass thru the token to be used in services classes
+                        SecurityContextHolder.getContext().setAuthentication(authToken);
+                    }
+                }
+            } catch (Exception e) {
+                // Token invalid or expired
+                System.out.println("JWT Verification failed: " + e.getMessage());
+            }
         }
 
         //this allows the request/response to be passed back to the controller so the req dont get stuck

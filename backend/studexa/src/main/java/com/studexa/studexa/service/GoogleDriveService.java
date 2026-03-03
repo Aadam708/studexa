@@ -13,8 +13,13 @@ import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.DriveScopes;
+
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.text.PDFTextStripper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import java.io.ByteArrayOutputStream;
+
 
 @Service
 public class GoogleDriveService {
@@ -38,7 +43,7 @@ public class GoogleDriveService {
                 jsonFactory,
                 clientId,
                 clientSecret,
-                Collections.singleton(DriveScopes.DRIVE_FILE)
+                Collections.singletonList(DriveScopes.DRIVE_READONLY)
         )
         .setDataStoreFactory(new MemoryDataStoreFactory())
         .setAccessType("offline")
@@ -52,7 +57,7 @@ public class GoogleDriveService {
                 .setState(userId)
                 .build();
     }
-    
+
     public Credential handleCallback(String code, String userId) throws IOException {
         GoogleTokenResponse tokenResponse = flow.newTokenRequest(code)
                 .setRedirectUri(redirectUri)
@@ -68,5 +73,37 @@ public class GoogleDriveService {
         return new Drive.Builder(httpTransport, jsonFactory, credential)
                 .setApplicationName("studexa")
                 .build();
+    }
+
+    public String downloadFileContent(String userId, String fileId) throws IOException {
+        Credential cred = loadCredential(userId);
+        if (cred == null) throw new IOException("User not authenticated");
+
+        Drive drive = buildDrive(cred);
+
+        // cchecking file type
+        var fileMetadata = drive.files().get(fileId).setFields("mimeType, name").execute();
+        String mimeType = fileMetadata.getMimeType();
+
+        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+            if (mimeType.equals("application/vnd.google-apps.document")) {
+                // converting Google Doc to plain text
+                drive.files().export(fileId, "text/plain").executeMediaAndDownloadTo(outputStream);
+                return outputStream.toString("UTF-8");
+            } else if (mimeType.equals("application/pdf")) {
+                // dowloading PDF
+                drive.files().get(fileId).executeMediaAndDownloadTo(outputStream);
+
+                // extracting text using the pdftextstripper class
+                try (PDDocument document = PDDocument.load(outputStream.toByteArray())) {
+                    PDFTextStripper stripper = new PDFTextStripper();
+                    return stripper.getText(document);
+                }
+            } else {
+                // trying to get plain text download for others if the teststripper doesnt work
+                drive.files().get(fileId).executeMediaAndDownloadTo(outputStream);
+                return outputStream.toString("UTF-8");
+            }
+        }
     }
 }

@@ -12,7 +12,7 @@ declare global {
 }
 
 export default function UploadSection({ subjects, refreshSubjects }: { subjects: Subject[]; refreshSubjects: () => void }) {
-  const [selectedSubject, setSelectedSubject] = useState("");
+  const [selectedSubjectId, setSelectedSubjectId] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [selectedFile, setSelectedFile] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -84,30 +84,69 @@ export default function UploadSection({ subjects, refreshSubjects }: { subjects:
   };
 
   const handleGenerateFlashcards = async () => {
-    if (!selectedFile || !selectedSubject) {
+    if (!selectedFile || !selectedSubjectId) {
       alert("Please select both a file and a subject");
       return;
     }
     setGenerating(true);
     try {
-      const res = await fetch("http://localhost:8080/api/flashcards/generate", {
+      //first need to create the doc in the db to save it so flashcards can be stoeed later
+      const createDocRes = await fetch("http://localhost:8080/api/documents/create", {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          driveFileId: selectedFile.id,
-          fileName: selectedFile.name,
-          subject: selectedSubject,
+          subjectId: selectedSubjectId,
+          title: selectedFile.name,
+          filePath: selectedFile.id, // using Drive file ID as the file path
         }),
       });
-      if (!res.ok) throw new Error("Failed");
-      const result = await res.json();
-      alert(`Generated ${result.cardCount} flashcards!`);
+
+      if (!createDocRes.ok) throw new Error("Failed to create Document record");
+
+      const documentData = await createDocRes.json();
+      console.log("Document Created with ID:", documentData.id);
+
+      // Find the subject name to pass to Gemini for the prompt
+      const subjectName = subjects.find(s => s.id.toString() === selectedSubjectId)?.name || "General";
+
+      // 2. THEN: Generate Flashcards using the file
+      const generateRes = await fetch("http://localhost:8080/api/flashcards/generate", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          documentId: documentData.id,
+          driveFileId: selectedFile.id,
+          fileName: selectedFile.name,
+          subject: subjectName,
+        }),
+      });
+
+      // added an  alert to force any errors to be shown on my  console
+      if (!generateRes.ok) {
+        const errorText = await generateRes.text();
+        const status = generateRes.status;
+        alert(` HTTP STATUS: ${status}\n ERROR Details: \n${errorText}`);
+        throw new Error(`Backend Error ${status}: ${errorText}`);
+      }
+
+      // making sure the json is corretly given
+      let result;
+      try {
+        result = await generateRes.json();
+      } catch (jsonErr) {
+        throw new Error("Backend succeeded, but Gemini returned invalid JSON instead of flashcards!");
+      }
+
+      console.log("Gemini JSON Result:", result);
+      alert(`Successfully created Document and Generated flashcards! Check console for JSON.`);
+
       setSelectedFile(null);
-      setSelectedSubject("");
+      setSelectedSubjectId("");
     } catch (error) {
       console.error(error);
-      alert("Failed to generate");
+      alert("Error: " + (error instanceof Error ? error.message : "Process failed"));
     } finally {
       setGenerating(false);
     }
@@ -168,13 +207,14 @@ export default function UploadSection({ subjects, refreshSubjects }: { subjects:
                  </div>
                ) : (
                 <select
-                    value={selectedSubject}
-                    onChange={(e) => setSelectedSubject(e.target.value)}
+                    value={selectedSubjectId}
+                    onChange={(e) => setSelectedSubjectId(e.target.value)}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600"
                 >
                     <option value="">Choose a subject...</option>
+                    {/* sub.id is the value for the DB subject, but sub.name for displaying better */}
                     {subjects.map((sub) => (
-                        <option key={sub.id} value={sub.name}>{sub.name}</option>
+                        <option key={sub.id} value={sub.id}>{sub.name}</option>
                     ))}
                 </select>
                )}
@@ -182,7 +222,7 @@ export default function UploadSection({ subjects, refreshSubjects }: { subjects:
 
              <button
                 onClick={handleGenerateFlashcards}
-                disabled={!isAuthenticated || !selectedFile || !selectedSubject || generating}
+                disabled={!isAuthenticated || !selectedFile || !selectedSubjectId || generating}
                 className="w-full bg-indigo-600 text-white py-3 rounded-lg font-medium hover:bg-indigo-700 disabled:opacity-50 flex items-center justify-center gap-2"
              >
                 <Sparkles className="w-5 h-5" />

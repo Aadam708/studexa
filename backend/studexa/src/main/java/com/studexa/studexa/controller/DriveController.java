@@ -2,7 +2,6 @@ package com.studexa.studexa.controller;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -15,11 +14,8 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.security.core.context.SecurityContextHolder; // Add this import
 
 import com.google.api.client.auth.oauth2.Credential;
-import com.google.api.services.drive.Drive;
-import com.google.api.services.drive.model.FileList;
 import com.studexa.studexa.service.GoogleDriveService;
 
-import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 // allowCredentials = "true" so the browser sends the JWT cookie

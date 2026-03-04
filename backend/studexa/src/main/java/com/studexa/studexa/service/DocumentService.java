@@ -56,7 +56,7 @@ public class DocumentService {
 
         Document saved = documentRepository.save(savedDocument);
 
-        return new DocumentDto(saved.getId(), saved.getSubject().getId(), saved.getTitle());
+        return new DocumentDto(saved.getId(), saved.getSubject().getId(), saved.getSubject().getName(), saved.getTitle());
     }
 
     public List<DocumentDto> findUserDocuments(){
@@ -75,6 +75,7 @@ public class DocumentService {
                             DocumentDto.builder()
                                 .id(document.getId())
                                 .subjectId(document.getSubject().getId())
+                                .subjectName(document.getSubject().getName())
                                 .title(document.getTitle())
                                 .build();
 

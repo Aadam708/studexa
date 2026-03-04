@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import DashNavbar from "@/components/DashNavbar";
 import { Subject } from "@/types";
-import MaterialsGrid, { sampleMaterials } from "@/components/revise/MaterialsGrid";
+import MaterialsGrid, { Document } from "@/components/revise/MaterialsGrid";
 import SubjectsGrid from "@/components/revise/SubjectsGrid";
 import UploadSection from "@/components/revise/UploadSection";
 
@@ -11,9 +11,12 @@ export default function Page() {
   const [activeTab, setActiveTab] = useState<"revise" | "materials" | "subjects">("revise");
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [isLoadingSubjects, setIsLoadingSubjects] = useState(false);
+  const [materials, setMaterials] = useState<Document[]>([]);
+  const [isLoadingMaterials, setIsLoadingMaterials] = useState(false);
 
   useEffect(() => {
     fetchSubjects();
+    fetchMaterials();
   }, []);
 
   const fetchSubjects = async () => {
@@ -33,10 +36,27 @@ export default function Page() {
     }
   };
 
+  //replacing my sample data with this real json fetched from documents endpoint for curr user
+  const fetchMaterials = async () => {
+    setIsLoadingMaterials(true);
+    try {
+      const res = await fetch("http://localhost:8080/api/documents", {
+        credentials: "include",
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setMaterials(data);
+      }
+    } catch (error) {
+      console.error("Error fetching materials:", error);
+    } finally {
+      setIsLoadingMaterials(false);
+    }
+  };
+
   return (
     <main className="bg-[#F5F5F7] min-h-screen">
       <DashNavbar />
-
 
       <div className="max-w-7xl mx-auto px-8 py-8">
         {/* Header */}
@@ -68,7 +88,14 @@ export default function Page() {
 
         {/* Tab Content */}
         {activeTab === "revise" && <UploadSection subjects={subjects} refreshSubjects={fetchSubjects} />}
-        {activeTab === "materials" && <MaterialsGrid materials={sampleMaterials} />}
+        {activeTab === "materials" && (
+          isLoadingMaterials ? (
+            <div className="text-center py-10 text-gray-500">Loading your materials...</div>
+          ) : (
+            //this passes  the materials grid with the materials from the json from the document endpoint
+            <MaterialsGrid materials={materials} />
+          )
+        )}
         {activeTab === "subjects" && (
           <SubjectsGrid
             subjects={subjects}
@@ -81,7 +108,6 @@ export default function Page() {
   );
 }
 
-//tab component function to show the current tab the user is on by colours
 function TabButton({ label, isActive, onClick }: { label: string; isActive: boolean; onClick: () => void }) {
   return (
     <button

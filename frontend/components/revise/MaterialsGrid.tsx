@@ -1,41 +1,17 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
+import { useRouter } from "next/navigation";
 
-// this matches what backend sends in DocumentDto
 export type Document = {
   id: number;
   subjectId: number;
-  subjectName:string;
+  subjectName: string;
   title: string;
 };
 
 export default function MaterialsGrid({ materials }: { materials: Document[] }) {
-  const [loadingId, setLoadingId] = useState<number | null>(null);
-
-  const fetchFlashcards = async (documentId: number) => {
-    setLoadingId(documentId);
-    try {
-      const res = await fetch(`http://localhost:8080/api/flashcards/${documentId}`, {
-        credentials: "include",
-      });
-
-      if (!res.ok) throw new Error("Failed to fetch flashcards");
-
-      const flashcards = await res.json();
-      console.log("Fetched User Flashcards:", flashcards);
-      alert(`Loaded ${flashcards.length} flashcards details in console!`);
-      //  I will  eventually set these flashcards into a state to show the Ui but right now
-      //it just displays the flashcards in network part of the dev tools so i know the endpoint access
-      //is successful
-
-    } catch (error) {
-      console.error(error);
-      alert("Error loading flashcards.");
-    } finally {
-      setLoadingId(null);
-    }
-  };
+  const router = useRouter();
 
   if (materials.length === 0) {
     return <div className="text-gray-500 text-center py-10">No materials generated yet.</div>;
@@ -64,22 +40,21 @@ export default function MaterialsGrid({ materials }: { materials: Document[] }) 
               <div className="flex-1">
                 <h4 className="font-medium text-sm leading-tight">{material.title}</h4>
                 <p className="text-xs mt-1 text-indigo-600">
-                  Subject: {material.subjectName}
+                  Subject: {material.subjectName || material.subjectId}
                 </p>
               </div>
             </div>
 
-            {/* Action Button */}
+            {/* Action Button to dynamic route on click passing the doc id*/}
             <button
-              onClick={() => fetchFlashcards(material.id)}
-              disabled={loadingId === material.id}
-              className="w-full bg-indigo-600 text-white py-2.5 rounded-lg font-medium hover:bg-indigo-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2 mt-6"
+              onClick={() => router.push(`/revise/${material.id}`)}
+              className="w-full bg-indigo-600 text-white py-2.5 rounded-lg font-medium hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2 mt-6"
             >
               <svg className="w-4 h-4"  fill="none"  stroke="currentColor" viewBox="0 0 24 24" >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              {loadingId === material.id ? "Loading..." : "Start Studying"}
+              Start Studying
             </button>
           </div>
         ))}

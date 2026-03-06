@@ -53,10 +53,26 @@ export default function FlashcardViewer({ documentId }: { documentId: string }) 
     }
   };
 
-  const handleAnswer = (correct: boolean) => {
-    // Next feature here will be to track the progress when they click the right/wrong buttons
-    //need to make the endpoint in my backend for userflashcard progress first
-    console.log(`Card ${flashcards[currentIndex].id} marked as ${correct ? "Right" : "Wrong"}`);
+  const handleAnswer = async (correct: boolean) => {
+    const currentCardId = flashcards[currentIndex].id;
+
+    //now i am calling the update endpoint to update the failure/success and/or success count in the
+    //flashcard table in my db
+    try {
+      await fetch("http://localhost:8080/api/progress/update", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          flashcardId: currentCardId,
+          isCorrect: correct,
+        }),
+      });
+      console.log(`Card ${currentCardId} successfully saved to DB as ${correct ? "Right" : "Wrong"}`);
+    } catch (err) {
+      console.error("Failed to update progress:", err);
+    }
+
     handleNext();
   };
 

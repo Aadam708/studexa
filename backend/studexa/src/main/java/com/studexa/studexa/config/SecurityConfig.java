@@ -40,8 +40,8 @@ public class SecurityConfig {
             .cors(cors -> {}) // enabling CORS
             .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**", "/api/drive/**", "/drive/**", "/api/subjects/**","/api/leaderboard/**", "api/flashcards/**").permitAll()
-                .requestMatchers("/api/predictions/mine").authenticated()
+                .requestMatchers("/api/auth/**", "/api/drive/**", "/drive/**", "/api/subjects/**", "api/flashcards/**").permitAll()
+                .requestMatchers("/api/leaderboard/mine").authenticated()
                 .requestMatchers("/api/predictions/**").permitAll()
                 .anyRequest().authenticated()
             );

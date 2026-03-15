@@ -36,7 +36,7 @@ export default function Home() {
 
         {/* CTA Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 items-center">
-          <Link href="/get-started">
+          <Link href="register">
             <button className="px-8 py-3.5 rounded-lg hover:cursor-pointer hover:-translate-y-0.5 bg-linear-to-r from-indigo-500  to-blue-500 text-white font-semibold hover:bg-indigo-700 shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2">
               Start Your Journey Today
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -45,7 +45,7 @@ export default function Home() {
             </button>
           </Link>
 
-          <Link href="/learn-more">
+          <Link href="login">
             <button className="px-8 py-3.5 rounded-lg bg-white text-gray-900 font-semibold border-2 border-gray-200 hover:border-gray-300 hover:bg-gray-50 hover:cursor-pointer transition-all duration-200">
               Learn More
             </button>

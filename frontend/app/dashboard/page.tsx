@@ -33,7 +33,7 @@ export default function Page() {
       <DashNavbar />
       <main className="p-8 bg-[#F5F5F7] min-h-screen">
         <header className="mb-6">
-          <h2 className="text-2xl font-semibold">Welcome back, Aadam! 👋</h2>
+          <h2 className="text-2xl font-semibold">Welcome back!</h2>
           <p className="text-sm text-gray-500 mt-1">
             Here's an overview of your learning progress
           </p>
